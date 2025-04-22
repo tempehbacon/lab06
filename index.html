@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Lab 06 - Colin Thompson</title>
+
+    <meta charset="utf-8" />
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/tempehbacon/lab06/67cf37522654f64db144471a48471b2c0b9ed027/icons/favicon.svg">
+      
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+      integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+      crossorigin=""/>
+
+    <script
+      src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
+      integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+      crossorigin="">
+    </script>
+
+    <script src="https://unpkg.com/leaflet-providers@latest/leaflet-providers.js"></script>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/5/w3.css">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+    <style>
+
+      html,
+
+      body {
+        height: 100%;
+        padding: 0;
+        margin: 0;
+        background-attachment: fixed;
+        background-size: 100% auto;
+      }
+
+      .pageHeader {
+        background-color: #BBD1EA;
+        color: #507DBC;
+        width: 100%;
+        height: 5%;
+        margin: 0;
+      }
+
+      #map {
+        width: 100%;
+        height: 95%;
+      }
+
+      * {
+      font-family: "Muli", sans-serif;
+      }
+
+      h1 {
+        font-family: "Space Mono", monospace;
+        font-size: 20px;
+        font-weight: 900;
+        margin: 0;
+        text-align: left;
+        color: #FFFFFF;
+        white-space: nowrap;
+      }
+
+      h2 {
+        font-family: "Space Mono", monospace;
+        font-size: 15px;
+        font-weight: 400;
+        margin: 0;
+        text-align: right;
+        color: #FFFFFF;
+        white-space: nowrap;
+      }
+
+      /*Legend*/
+      
+      .legend {
+        padding: 10px 10px;
+        font: 12px "Space Mono", monospace;
+        background: white;
+        background: rgba(255, 255, 255, 0.8);
+        line-height: 20px;
+        color: #555;
+      }
+      .legend h4 {
+        text-align: left;
+        font-family: "Space Mono", monospace;
+        font-weight: bolder;
+        font-size: 14px;
+        margin: 2px 2px 8px;
+        color: black;
+      }
+
+      .legend span {
+        position: relative;
+        bottom: 3px;
+      }
+
+      .legend i {
+        width: 18px;
+        height: 18px;
+        float: left;
+        margin: 0 8px 0 0;
+        opacity: 0.7;
+      }
+
+      .legend i.icon {
+        background-size: 18px;
+      }
+    
+    </style>
+
+  </head>
+
+  <body>
+    
+    <div class="w3-display-container w3-info" style="height:5%;">
+    <div class="w3-display-left w3-padding">
+      <h1>New York City Beach Conditions</h1>
+      </div>
+    <div class="w3-display-right w3-padding">
+      <h2>Use the Search Bar or Click to Start!</h2>
+      </div>
+    </div>
+
+    <div id="map"></div>
+
+    <script>
+
+    // <!-- Set Basemaps -->
+
+      var map = L.map("map", {
+        fullscreenControl: true,
+        maxZoom: 15,
+        minZoom: 11,
+      }).setView([40.685, -74], 11);
+
+      var basemapNames = [
+          "Esri.WorldGrayCanvas",
+          "CartoDB.Voyager",
+          "CartoDB.DarkMatter",
+        ]; var basemapLayers = Array(basemapNames.length).fill(null);
+
+      basemapNames.forEach((v, i) => {
+        basemapLayers[i] = L.tileLayer.provider(v);
+      });
+
+      basemapLayers[0].addTo(map);
+      
+    // <!-- Color-Coding Features -->
+
+      function statusColor(d){
+        return d = "Active" ? '#507DBC' :
+        '#DAE3E5' ;
+      }
+
+      function sampleColor(d){
+        return d >= 104 ? '#FF0000' :
+        '#008000' ;
+      }
+
+    // <!-- Events -->
+
+      function onEachFeature(feature, layer) {
+        
+        var popupContentA =
+          "</br> Beach: " +
+          feature.properties.name +
+          "</br> Status: " +
+          feature.properties.featurestatus +
+          "</p>";
+        if (feature.properties && feature.properties.popupContentA) {
+          popupContentA += feature.properties.popupContentA;
+        } layer.bindPopup(popupContentA);
+
+        layer.on({
+          mouseover: function (e) {
+            e.target.setStyle({ fillColor: "#507DBC", fillOpacity: 1 });
+          },
+          mouseout: (e) => beachLayer.resetStyle(e.target),
+        }
+      );
+      }
+
+    // <!-- Load Data -->
+
+      var sampleLayer = L.geoJSON(null, {
+          pointToLayer: (f, latLon) => {
+            let cL = L.circle(latLon, {
+              color: sampleColor(f.properties.Enterococci_Results),
+              fillOpacity: 0.5,
+              weight: 0.75,
+              radius: 200
+            });
+          cL.bindPopup("Average Enterococci Levels are " + f.properties.Enterococci_Results + " MPN/100 ml");
+          return cL;
+        },
+        style: function(feature) {
+          return {
+            //f.properties.Enterococci_Results INSIDE of the L.geoJSON brackets! FULL FEATURE outside!
+            color: sampleColor(feature.properties.Enterococci_Results),
+          }
+        }
+      }).addTo(map);
+
+      var beachLayer = L.geoJSON(null, 
+        {style: function (feature) {
+            return { color: "#BBD1EA",
+                     fillColor: statusColor(feature.properties.featurestatus),
+                     fillOpacity: 0.25,
+                     weight: .75
+                   };
+            },
+          onEachFeature: onEachFeature, //Name of Option, Value of Option
+      }).addTo(map);
+
+      $.getJSON("./Beaches.geojson", function (data) {
+        console.log(data);
+        console.log(data.features.length);
+        beachLayer.addData(data);
+      });
+
+      $.getJSON("./WaterSamples.geojson", function (data) {
+        console.log(data);
+        console.log(data.features.length);
+        sampleLayer.addData(data);
+      });
+
+      sampleLayer.on('click', function(e) {
+        map.flyTo(e.latlng, 15);      
+      }); 
+
+      beachLayer.on('click', function(e) {
+        map.flyTo(e.latlng, 15);      
+      }); 
+
+      // <!-- Layer Control -->
+
+      var baseLayers = {};
+      basemapNames.forEach((v, i) => {
+        baseLayers[v] = basemapLayers[i];
+      });
+
+      var overlayMaps = {
+        "Water Quality": sampleLayer,
+        "NYC Parks Beach Parcels": beachLayer,
+        //"Wind Conditions": velocityLayer,
+      };
+
+      var lC = L.control
+        .layers(baseLayers, overlayMaps, {
+          collapsed: true,
+          hideSingleBase: true,
+        }).addTo(map).expand();
+
+      // <!-- Search -->
+
+      var geocoder = L.Control.geocoder({
+        defaultMarkGeocode: false
+        })
+          .on('markgeocode', function(e) {
+            var bbox = e.geocode.bbox;
+            var poly = L.polygon([
+              bbox.getSouthEast(),
+              bbox.getNorthEast(),
+              bbox.getNorthWest(),
+              bbox.getSouthWest()
+            ]).addTo(map);
+            map.fitBounds(poly.getBounds());
+        }).addTo(map);
+
+      // <!-- Legend -->
+
+        var legend = L.control({position:"bottomleft"});
+
+        legend.onAdd = function(map) {
+          var div = L.DomUtil.create("div", "legend");
+          div.innerHTML += "<h4>Legend</h4>";
+          div.innerHTML += '<i style="background: #507DBC"></i><span>Active Beachfront</span><br>';
+          div.innerHTML += '<i style="background: #DAE3E5"></i><span>Closed Beachfront</span><br>';
+          div.innerHTML += '<i style="background: #008000"></i><span>Good Water Quality</span><br>';
+          div.innerHTML += '<i style="background: #FF0000"></i><span>Poor Water Quality</span><br>';
+          return div;
+        }; legend.addTo(map);
+
+    </script>
+  </body>
+</html>
